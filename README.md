@@ -1,7 +1,7 @@
 Distributed Systems Class - Final Challenge
 ===========================================
 
-This is the final challenge  for the Distributed Computing Class. This is the integration of 3 phases.
+This is the final challenge  for the Distributed Computing Class.
 
 A strong recomendation is that you develop your solution the most simple, readable, scalable and plugable as possible. In the future you may reuse this code to
 be integrated with  more services, so a well-defined design and implementation will make it easier to integrate new modules into your distributed application.
@@ -9,7 +9,7 @@ be integrated with  more services, so a well-defined design and implementation w
 Distributed and Parallel Image Processing
 -----------------------------------------
 
-![architecture](architecture.png)
+![architecture](images/architecture.png)
 
 ### Last Phase for the Final Challage
 This is going to be the last phase of design and implementation.
@@ -22,15 +22,27 @@ On this phase you are working in all the components.
 Your project will be divided on packages with very descriptive names where each system's component will be implemented.
 Below you can see the details of each package and requirements for this final challenge:
 
-- `api/`
-  - All request must be token-based authenticated
-  - **Endpoint:** `/results/<workload_id>` - Will serve as a static file server for all processed images for the specified workload id
-  - **Endpoint:** `workloads/filter` - This endpoint will trigger an image filtering. This will be an end-to-end call from `api` to `worker`.
-  - **Endpoint:** `/download` - Will be used by workers to download images that will be filtered
-  - **Modify Endpoint:** `/upload` - Now, it will be only used by workers to store filtered images
-  - For last 2 endpoints, workers will authenticate with workers-specific tokens, user's tokens will not work for these endpoints.
+### API
+Below you will see the complete list of supported API endpoints.
 
-- `controller/`
+  - All request must be token-based authenticated
+  - Make sure that you have a proper error handling, the output format is up to you
+  - Respect the parameters, output fields and http method
+  - All responses must be in JSON format (except for the image's download)
+
+#### Endpoints
+| Endpoint                   | Authentication | Description                             | Supported Parameters      | JSON Response fields                                                                                                                                                                 | HTTP Method |
+|----------------------------|----------------|-----------------------------------------|---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
+| `/login`                   | User/Password  | Logins into DPIP                        |                           | `user`, `token`                                                                                                                                                                      | POST        |
+| `/logout`                  | Token          | Logouts from DPIP                       |                           | `logout_message`                                                                                                                                                                     | DELETE      |
+| `/status`                  | Token          | Provides overall system status          |                           | `system_name`, `server_time`, `active_workloads`(array)                                                                                                                              | GET         |
+| `/workloads`               | Token          | Creates a new workload                  | `filter`, `workload_name` | `workload_id`, `filter` (`grayscale`, or `blur`), `workload_name`, `status` (`scheduling`, `running`, `completed`), `running_jobs` (integer), `filtered_images` (images - IDs array) | POST        |
+| `/workloads/{workload_id}` | Token          | Gets details about an specific workload |                           | Same data as previous endpoint ^^                                                                                                                                                    | GET         |
+| `/images`                  | Token          | Uploads an image                        | Image file, `workload_id` | `workload_id`, `image_id`, `type` (`orginal` or `filtered`)                                                                                                                          | POST        |
+| `/images/{image_id}`       | Token          | Downloads an original or filtered image |                           |                                                                                                                                                                                      | GET         |
+
+
+### Controller
   - Controller will keep record of activity and CPU,Memory and GPU resources utilization on its data store mechanism
   - Controller will keep record of the workloads information
   - For every workload id, the controller is creating a results directory
