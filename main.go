@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/CodersSquad/dc-final/api"
 	"github.com/CodersSquad/dc-final/controller"
 	"github.com/CodersSquad/dc-final/scheduler"
 )
@@ -22,11 +23,13 @@ func main() {
 	// Send sample jobs
 	sampleJob := scheduler.Job{Address: "localhost:50051", RPCName: "hello"}
 
+	// API
+	go api.n
+	tart()
+
 	for {
 		sampleJob.RPCName = fmt.Sprintf("hello-%v", rand.Intn(10000))
 		jobs <- sampleJob
 		time.Sleep(time.Second * 5)
 	}
-	// API
-	// Here's where your API setup will be
 }

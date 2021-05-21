@@ -43,29 +43,28 @@ Below you will see the complete list of supported API endpoints.
 
 
 ### Controller
-  - Controller will keep record of activity and CPU,Memory and GPU resources utilization on its data store mechanism
-  - Controller will keep record of the workloads information
-  - For every workload id, the controller is creating a results directory
-  - The results directory will server for saving all procceded images that are coming from the workers
-  - Image's name will be renamed in a consecutive order as they were arriving in time. Below an example on how **results** directory should look:
-  ```
-	results/my-filters/
-		1.png
-		2.png
-		3.png
-		4.png
-		5.png
-	results/video-frames/
-		1.jpg
-		2.jpg
-		3.jpg
-  ```
 
-- `scheduler/`
+The `controller` module has 2 main roles:
+
+- A **message-passing** server that will be in communication where all new workers will subscribed
+- A **datastore** service for system's overall status, workloads and workers information
+
+Below some extra notes and considerations for the Controller
+
+  - Consider reading the [Nanomsg documentation](https://nanomsg.org/gettingstarted/index.html) and [mangos package](https://github.com/nanomsg/mangos) in order to do the proper choice of Messaging Pattern for your system.
+  - The Controller will keep record of activity and CPU and Memory resources utilization on its datastore service
+  - The Controller will keep record of workloads information
+  - For every `workload_name`, the controller is creating a directory in the `images` space
+  - The `images` directory will serve for saving all procceded images that are coming from the workers
+  - Image's name can be according to the ID you're assigning. It's your choice, just make sure that you have the proper information in the controller's database.
+
+
+### Scheduler
   - Smart scheduling based on node utilization in terms of CPU, Memory and GPU availability
   - Scheduler is calling workers through RPC
 
-- `worker/`
+
+### Worker
   - Standalone component with initial `test` RPC function.
   - Worker's command line will be as follows:
     - ```
