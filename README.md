@@ -68,8 +68,9 @@ Below some extra notes and considerations for the Controller
   - Standalone component with initial `test` RPC function.
   - Worker's command line will be as follows:
     - ```
-      ./worker --controller <host>:<port> --node-name <node_name> --tags <tag1>,<tag2> \
-      	       --image-store-endpoint <host>:<port> --image-store-token <auth-token>
+      cd worker/
+      export GO111MODULE=off
+      go run main.go --controller <host>:<port> --worker-name <worker_name> --tags <tag1>,<tag2>
       ```
   - `image-store-endpoint` will be the API's endpoint
   - `image-store-token` will serve for authenticating the Image Store API
