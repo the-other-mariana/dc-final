@@ -24,8 +24,7 @@ func main() {
 	sampleJob := scheduler.Job{Address: "localhost:50051", RPCName: "hello"}
 
 	// API
-	go api.n
-	tart()
+	go api.Start()
 
 	for {
 		sampleJob.RPCName = fmt.Sprintf("hello-%v", rand.Intn(10000))
