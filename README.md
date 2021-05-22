@@ -69,7 +69,7 @@ Below some extra notes and considerations for the Controller
 The `worker` will be a self-running component that will do the real work of filtering images.
 
 - The `worker` will initially connect to the `controller` for:
-  - Subscribing a a new `worker`
+  - Subscribing as a new `worker`
   - Once subscribed, receive information about the API (endpoint and token), this will be required by the `worker` in order to
     download and then upload images
 - Worker will keep updated the controller with its CPU and Memory resources, alongside the number of running jobs
