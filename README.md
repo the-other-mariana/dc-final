@@ -65,43 +65,38 @@ Below some extra notes and considerations for the Controller
 
 
 ### Worker
-  - Standalone component with initial `test` RPC function.
-  - Worker's command line will be as follows:
-    - ```
-      cd worker/
-      export GO111MODULE=off
-      go run main.go --controller <host>:<port> --worker-name <worker_name> --tags <tag1>,<tag2>
-      ```
-  - `image-store-endpoint` will be the API's endpoint
-  - `image-store-token` will serve for authenticating the Image Store API
 
-**Documentation**
-- A detailed arquitecture document will be required for this initial phase in the [architecture.md](architecture.md) file. Diagrams and charts can be included on this document.
+The `worker` will be a self-running component that will do the real work of filtering images.
+
+- The `worker` will initially connect to the `controller` for:
+  - Subscribing a a new `worker`
+  - Once subscribed, receive information about the API (endpoint and token), this will be required by the `worker` in order to
+    download and then upload images
+- Worker will keep updated the controller with its CPU and Memory resources, alongside the number of running jobs
+- You can run as many workers you want
+- Scheduler will send jobs to the `worker` with RPC
+- Startup command for the worker is:
+
+```
+cd worker/
+export GO111MODULE=off
+go run main.go --controller <host>:<port> --worker-name <worker_name> --tags <tag1>,<tag2>
+```
+
+- `image-store-endpoint` will be the API's endpoint
+- `image-store-token` will serve for authenticating the Image Store API
+
+## Documentation
+
+- A detailed arquitecture must be written in the [architecture.md](architecture.md) file. Diagrams and charts can be included on this document.
 - A detailed user guide must be written in the [user-guide.md](user-guide.md) file. This document explains how to install, configure and use your system.
 
 
 Test Cases (from console)
 -------------------------
-- **Execute Filter Workload**
-```
-$ curl -F 'data=@path/to/local/image.png' -d 'workload-id=my-filters&filter=grayscale' -H "Authorization: Bearer <ACCESS_TOKEN>" http://localhost:8080/workloads/filter
-{
-	"Workload ID": "my-filters",
-	"Filter": "grayscale",
-	"Job ID": 1,
-	"Status": "Scheduling",
-	"Results: "http://localhost:8080/results/my-filters/"
-}
-```
 
-- **WORKERS API calls**
-  - http://localhost:8080/upload
-    - Request will contain `workload_id` and `image`, authenticated with the `worker-token`
-  - http://localhost:8080/download
-    - Request will contain `workload_id` and `image_id`, authenticated with the `worker-token`
-
-- **Results Endpoint**
-  - http://localhost:8080/results/<workload_id>
+**IMPORTANT**
+This section will be updated soon, expect updates about the full system test suite.
 
 - A [script](https://floobits.com/obedmr/dc-labs/file/final/stress_test.py) is provided to do an intensive end-to-end testing
 
