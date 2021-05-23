@@ -6,9 +6,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/CodersSquad/dc-final/api"
-	"github.com/CodersSquad/dc-final/controller"
-	"github.com/CodersSquad/dc-final/scheduler"
+	"github.com/the-other-mariana/dc-final/api"
+	"github.com/the-other-mariana/dc-final/controller"
+	"github.com/the-other-mariana/dc-final/scheduler"
 )
 
 func main() {
