@@ -250,8 +250,8 @@ func WorkerStatus(c *gin.Context) {
 func Start(){
 	router := gin.Default()
 	
-	router.GET("/login", Login)
-	router.GET("/logout", Logout)
+	router.POST("/login", Login)
+	router.DELETE("/logout", Logout)
 	router.GET("/status", Status)
 	router.POST("/upload", Upload)
 
