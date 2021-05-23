@@ -23,6 +23,8 @@ var done = make(chan string)
 
 var actions = make(map[string]Action)
 var Workers = make(map[string]Worker)
+var Workloads = make(map[string]Workload)
+//var filters = make(map[string]ImageService)
 
 type Worker struct {
 	Name     string `json:"name"`
@@ -38,6 +40,19 @@ type Worker struct {
 type Action struct {
 	id		int
 	worker 	string
+}
+type ImageService struct{
+	id int
+	image string
+	worker string
+}
+type Workload struct{
+	Id int
+	Filter string
+	Name string
+	Status string
+	Jobs int
+	Imgs []string
 }
 
 func die(format string, v ...interface{}) {
@@ -139,3 +154,4 @@ func GetWorker(id int) string {
 	name := actions[strconv.Itoa(id)].worker
 	return name
 }
+

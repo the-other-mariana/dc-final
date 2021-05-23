@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/static"
 	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"path"
 	"strconv"
+	"os"
 
 	"github.com/the-other-mariana/dc-final/controller"
 	"github.com/the-other-mariana/dc-final/scheduler"
@@ -230,6 +232,56 @@ func Workloads(c *gin.Context) {
 	}
 }
 
+func CreateWorkload(c *gin.Context){
+	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
+	token := params[1]
+
+	if _, ok := Users[token]; ok {
+		workloadName := c.PostForm("workload_name")
+		filter := c.PostForm("filter")
+
+		taken := false
+		for _, v := range controller.Workloads {
+			if v.Name == workloadName {
+				taken = true
+				break
+			}
+		}
+		
+		if (!taken){
+			// making directory for processed images
+			uploadsFolder := "public/results/" + workloadName + "/"
+			_ = os.MkdirAll(uploadsFolder, 0755)
+
+			newWL := controller.Workload{
+				Id: len(controller.Workloads),
+				Filter: filter,
+				Name: workloadName,
+				Status: "scheduling",
+				Jobs: 0,
+				Imgs: []string{},
+			}
+
+			controller.Workloads[fmt.Sprintf("%v", newWL.Id)] = newWL
+
+			c.JSON(http.StatusOK, map[string]interface{}{
+				"workload_id": newWL.Id,
+				"filter":   filter,
+				"workload_name": workloadName,
+				"status": newWL.Status,
+				"running_jobs": newWL.Jobs,
+				"filtered_images": newWL.Imgs,
+			})
+		} else {
+			c.JSON(http.StatusOK, ErrorResponse("This workload already exists"))
+		}
+
+		
+	} else {
+		c.JSON(http.StatusOK, ErrorResponse("Your token does not exist yet"))
+	}
+}
+
 func WorkerStatus(c *gin.Context) {
 	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
 	token := params[1]
@@ -249,13 +301,14 @@ func WorkerStatus(c *gin.Context) {
 
 func Start(){
 	router := gin.Default()
-	
+	router.Use(static.Serve("/", static.LocalFile("./public", true)))
 	router.POST("/login", Login)
 	router.DELETE("/logout", Logout)
 	router.GET("/status", Status)
 	router.POST("/upload", Upload)
 
 	router.GET("/workloads/test", Workloads)
+	router.POST("/workloads", CreateWorkload)
 	router.GET("/status/:worker", WorkerStatus)
 
 	router.Run(":8080")
