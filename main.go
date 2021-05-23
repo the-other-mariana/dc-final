@@ -1,10 +1,11 @@
 package main
 
 import (
-	"fmt"
+	//"fmt"
 	"log"
-	"math/rand"
+	//"math/rand"
 	"time"
+	"github.com/gin-gonic/gin"
 
 	"github.com/the-other-mariana/dc-final/api"
 	"github.com/the-other-mariana/dc-final/controller"
@@ -18,17 +19,31 @@ func main() {
 	go controller.Start()
 
 	// Start Scheduler
-	jobs := make(chan scheduler.Job)
-	go scheduler.Start(jobs)
+	
+	go scheduler.Start(api.Jobs)
 	// Send sample jobs
-	sampleJob := scheduler.Job{Address: "localhost:50051", RPCName: "hello"}
+	//sampleJob := scheduler.Job{Address: "localhost:50051", RPCName: "hello"}
 
 	// API
-	go api.Start()
+	// Here's where your API setup will be
+	router := gin.Default()
+	
+	router.GET("/login", api.Login)
+	router.GET("/logout", api.Logout)
+	router.GET("/status", api.Status)
+	router.POST("/upload", api.Upload)
+
+	router.GET("/workloads/test", api.Workloads)
+	router.GET("/status/:worker", api.WorkerStatus)
+
+	go router.Run(":8080")
+
+	sampleJob := scheduler.Job{Address: "localhost:50051", RPCName: ""}
 
 	for {
-		sampleJob.RPCName = fmt.Sprintf("hello-%v", rand.Intn(10000))
-		jobs <- sampleJob
-		time.Sleep(time.Second * 5)
+		if sampleJob.RPCName == "test" {
+			api.Jobs <- sampleJob
+		}
+		time.Sleep(time.Second * 2)
 	}
 }
