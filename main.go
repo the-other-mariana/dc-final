@@ -5,7 +5,6 @@ import (
 	"log"
 	//"math/rand"
 	"time"
-	"github.com/gin-gonic/gin"
 
 	"github.com/the-other-mariana/dc-final/api"
 	"github.com/the-other-mariana/dc-final/controller"
@@ -26,17 +25,7 @@ func main() {
 
 	// API
 	// Here's where your API setup will be
-	router := gin.Default()
-	
-	router.GET("/login", api.Login)
-	router.GET("/logout", api.Logout)
-	router.GET("/status", api.Status)
-	router.POST("/upload", api.Upload)
-
-	router.GET("/workloads/test", api.Workloads)
-	router.GET("/status/:worker", api.WorkerStatus)
-
-	go router.Run(":8080")
+	go api.Start()
 
 	sampleJob := scheduler.Job{Address: "localhost:50051", RPCName: ""}
 

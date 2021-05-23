@@ -246,3 +246,17 @@ func WorkerStatus(c *gin.Context) {
 		c.JSON(http.StatusOK, ErrorResponse("Your token does not exist yet"))
 	}
 }
+
+func Start(){
+	router := gin.Default()
+	
+	router.GET("/login", Login)
+	router.GET("/logout", Logout)
+	router.GET("/status", Status)
+	router.POST("/upload", Upload)
+
+	router.GET("/workloads/test", Workloads)
+	router.GET("/status/:worker", WorkerStatus)
+
+	router.Run(":8080")
+}
