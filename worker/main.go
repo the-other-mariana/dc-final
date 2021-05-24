@@ -8,7 +8,7 @@ import (
 	"net"
 	"os"
 
-	pb "github.com/CodersSquad/dc-labs/challenges/third-partial/proto"
+	pb "github.com/the-other-mariana/dc-final/proto"
 	"go.nanomsg.org/mangos"
 	//"go.nanomsg.org/mangos/protocol/sub"
 	"google.golang.org/grpc"
@@ -61,6 +61,10 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 		status = "Running"
 		return &pb.HelloReply{Message: "Hello " + workerName}, nil
 	}	
+}
+
+func (s *server) SayHelloAgain(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	return &pb.HelloReply{Message: "Hello again " + in.GetName()}, nil
 }
 
 // ./worker --controller <host>:<port> --worker-name <node_name> --tags <tag1>,<tag2>...

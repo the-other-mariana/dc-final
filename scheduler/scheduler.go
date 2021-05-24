@@ -17,13 +17,15 @@ import (
 //	defaultName = "world"
 //)
 
+var jobsCount int
+
 type Job struct {
 	Address string
 	RPCName string
+	Info [4]string
 }
 
 func schedule(job Job, name string) {
-	// Set up a connection to the server.
 	conn, err := grpc.Dial(job.Address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
@@ -43,7 +45,7 @@ func schedule(job Job, name string) {
 	jobsCount++
 }
 
-var jobsCount int
+
 
 func Start(jobs chan Job) error {
 	jobsCount = 0

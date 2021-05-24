@@ -166,11 +166,11 @@ func Status(c *gin.Context) {
 }
 
 // upload json response
-func UploadResponse(filename string, size int64) (gin.H) {
+func UploadResponse(workloadId string, id int, imgType string) (gin.H) {
 	resp := gin.H{
-		"message": "An image has been successfully uploaded",
-		"filename": filename,
-		"size": ByteCount(size),
+		"workload_id": workloadId,
+		"image_id": fmt.Sprintf("%v", id),
+		"type": imgType,
 	}
 	return resp
 }
@@ -270,8 +270,6 @@ func Upload(c *gin.Context) {
 
 		workloadId := c.PostForm("workload_id")
 		
-		imgSize := file.Size
-		
 		id := 0
 		myWorkload := controller.Workload{}
 		updatedWL := controller.Workload{}
@@ -306,7 +304,13 @@ func Upload(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, UploadResponse(newFilename, imgSize))
+		information := [4]string{newPath, filepath.Ext(file.Filename), workloadId, controller.Workloads[workloadId].Filter}
+
+		sampleJob := scheduler.Job{Address: "localhost:50051", RPCName: "image", Info: information}
+		Jobs <- sampleJob
+		time.Sleep(time.Second * 5)
+
+		c.JSON(http.StatusOK, UploadResponse(workloadId, id, "original"))
 	} else {
 		c.JSON(http.StatusConflict, ErrorResponse("Your token does not exist yet"))
 	}
