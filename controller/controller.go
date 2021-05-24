@@ -47,7 +47,7 @@ type ImageService struct{
 	worker string
 }
 type Workload struct{
-	Id int
+	Id string
 	Filter string
 	Name string
 	Status string

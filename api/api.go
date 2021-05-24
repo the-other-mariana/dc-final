@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/static"
 	"github.com/dgrijalva/jwt-go"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	//"go.mongodb.org/mongo-driver/bson/primitive"
 	"strings"
 	"encoding/base64"
 	"net/http"
@@ -175,39 +175,6 @@ func UploadResponse(filename string, size int64) (gin.H) {
 	return resp
 }
 
-// upload handler
-func Upload(c *gin.Context) {
-	c.Writer.Header().Set("Content-Type", "application/json")
-	fmt.Println("Response Type:", c.Writer.Header().Get("Content-Type"))
-
-	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
-	token := params[1]
-
-	if _, ok := Users[token]; ok {
-		file, err := c.FormFile("data")
-		if err != nil {
-			c.JSON(http.StatusConflict, ErrorResponse("Error at retrieving form data"))
-			return
-		}
-		
-		imgSize := file.Size
-		imgName := filepath.Base(file.Filename)
-		// gives the uploaded image a unique name
-		id := primitive.NewObjectID().Hex()
-		newFilename := id + "_" + imgName
-		newPath := path.Join("./", newFilename)
-
-		if err := c.SaveUploadedFile(file, newPath); err != nil {
-			c.JSON(http.StatusConflict, ErrorResponse("Could not save the file"))
-			return
-		}
-
-		c.JSON(http.StatusOK, UploadResponse(newFilename, imgSize))
-	} else {
-		c.JSON(http.StatusConflict, ErrorResponse("Your token does not exist yet"))
-	}
-}
-
 var Jobs = make(chan scheduler.Job)
 var NumTests int
 
@@ -253,8 +220,12 @@ func CreateWorkload(c *gin.Context){
 			uploadsFolder := "public/results/" + workloadName + "/"
 			_ = os.MkdirAll(uploadsFolder, 0755)
 
+			// making directory for not yet processed images
+			downloadFolder := "download/" + workloadName + "/"
+			_ = os.MkdirAll("public/" + downloadFolder, 0755)
+
 			newWL := controller.Workload{
-				Id: len(controller.Workloads),
+				Id: fmt.Sprintf("%v", len(controller.Workloads)),
 				Filter: filter,
 				Name: workloadName,
 				Status: "scheduling",
@@ -282,6 +253,65 @@ func CreateWorkload(c *gin.Context){
 	}
 }
 
+// upload handler
+func Upload(c *gin.Context) {
+	c.Writer.Header().Set("Content-Type", "application/json")
+	fmt.Println("Response Type:", c.Writer.Header().Get("Content-Type"))
+
+	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
+	token := params[1]
+
+	if _, ok := Users[token]; ok {
+		file, err := c.FormFile("data")
+		if err != nil {
+			c.JSON(http.StatusConflict, ErrorResponse("Error at retrieving form data"))
+			return
+		}
+
+		workloadId := c.PostForm("workload_id")
+		
+		imgSize := file.Size
+		
+		id := 0
+		myWorkload := controller.Workload{}
+		updatedWL := controller.Workload{}
+
+		if _, ok := controller.Workloads[workloadId]; ok {
+
+			updatedWL = controller.Workload{
+				Id: controller.Workloads[workloadId].Id,
+				Filter: controller.Workloads[workloadId].Filter,
+				Name: controller.Workloads[workloadId].Name,
+				Status: "scheduling",
+				Jobs: controller.Workloads[workloadId].Jobs + 1,
+				Imgs: controller.Workloads[workloadId].Imgs,
+			}
+
+			myWorkload = updatedWL
+			id = len(controller.Workloads[workloadId].Imgs) + 1
+			
+		} else {
+			c.JSON(http.StatusConflict, ErrorResponse("Given workload does not exist"))
+		}
+
+		newFilename := fmt.Sprintf("%v", id) + filepath.Ext(file.Filename)
+		downloadFolder := "public/download/" + myWorkload.Name + "/"
+		newPath := path.Join(downloadFolder, newFilename)
+
+		updatedWL.Imgs = append(controller.Workloads[workloadId].Imgs, newFilename)
+		controller.Workloads[workloadId] = updatedWL
+
+		if err := c.SaveUploadedFile(file, newPath); err != nil {
+			c.JSON(http.StatusConflict, ErrorResponse("Could not save the file"))
+			return
+		}
+
+		c.JSON(http.StatusOK, UploadResponse(newFilename, imgSize))
+	} else {
+		c.JSON(http.StatusConflict, ErrorResponse("Your token does not exist yet"))
+	}
+}
+
 func WorkerStatus(c *gin.Context) {
 	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
 	token := params[1]
@@ -305,7 +335,7 @@ func Start(){
 	router.POST("/login", Login)
 	router.DELETE("/logout", Logout)
 	router.GET("/status", Status)
-	router.POST("/upload", Upload)
+	router.POST("/images", Upload)
 
 	router.GET("/workloads/test", Workloads)
 	router.POST("/workloads", CreateWorkload)
