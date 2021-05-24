@@ -36,7 +36,7 @@ func schedule(job Job, name string) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: job.RPCName})
+	r, err := c.SayHelloAgain(ctx, &pb.HelloRequest{Name: job.RPCName})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
