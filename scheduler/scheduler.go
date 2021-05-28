@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 	"strconv"
+	"path"
+	"strings"
 
 	"github.com/the-other-mariana/dc-final/controller"
 
@@ -31,16 +33,27 @@ func schedule(job Job, name string) {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
+	c := pb.NewTaskClient(conn)
 	controller.UpdateStatus(name)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.SayHelloAgain(ctx, &pb.HelloRequest{Name: job.RPCName})
-	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+	if job.RPCName == "image" {
+		wl := job.Info[2]
+		id := strings.Split(path.Base(job.Info[0]), ".")
+		id_int, _ := strconv.Atoi(id[0])
+		img := pb.Image{
+			Workload: wl, 
+			Index: int64(id_int), 
+			Filepath: job.Info[0],
+			Filter: job.Info[3],
+		}
+		r, err := c.FilterImage(ctx, &pb.ImgRequest{Name: "Image Filter", Img: &img })
+		if err != nil {
+			log.Fatalf("could not proccess image: %v", err)
+		}
+		log.Printf("Scheduler: RPC respose from %s : %s was filtered", job.Address, r.GetMessage())
 	}
-	log.Printf("Scheduler: RPC respose from %s : %s", job.Address, r.GetMessage())
 	controller.UpdateStatus(name)
 	jobsCount++
 }

@@ -25,7 +25,7 @@ var (
 
 // server is used to implement helloworld.GreeterServer.
 type server struct {
-	pb.UnimplementedGreeterServer
+	pb.UnimplementedTaskServer
 }
 
 var (
@@ -63,8 +63,20 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 	}	
 }
 
-func (s *server) SayHelloAgain(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	return &pb.HelloReply{Message: "Hello again " + in.GetName()}, nil
+
+func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgReply, error) {
+
+	fmt.Printf("I will filter the following image: ")
+	fmt.Printf(in.GetImg().Filepath + "\n")
+	fmt.Printf("Using the following filter: ")
+	fmt.Printf(in.GetImg().Filter + "\n")
+	//filter := in.GetImg().Filter
+	// download image from APIs endpoint
+
+	//DownloadFile(in.GetImg().Filepath, in.Img.Index, in.Img.Workload, filter)
+
+	return &pb.ImgReply{Message: "The image was proccesed by " + workerName}, nil
+
 }
 
 // ./worker --controller <host>:<port> --worker-name <node_name> --tags <tag1>,<tag2>...
@@ -129,7 +141,7 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterGreeterServer(s, &server{})
+	pb.RegisterTaskServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
