@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"path"
+	//"strconv"
 
 	pb "github.com/the-other-mariana/dc-final/proto"
 	"go.nanomsg.org/mangos"
@@ -17,6 +19,10 @@ import (
 
 	// register transports
 	_ "go.nanomsg.org/mangos/transport/all"
+
+	"github.com/anthonynsimon/bild/blur"
+	"github.com/anthonynsimon/bild/effect"
+    "github.com/anthonynsimon/bild/imgio"
 )
 
 var (
@@ -66,15 +72,54 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 
 func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgReply, error) {
 
-	fmt.Printf("I will filter the following image: ")
-	fmt.Printf(in.GetImg().Filepath + "\n")
-	fmt.Printf("Using the following filter: ")
-	fmt.Printf(in.GetImg().Filter + "\n")
-	//filter := in.GetImg().Filter
-	// download image from APIs endpoint
+	msg := fmt.Sprintf("I will filter the following image: %v with filter: %v \n", in.GetImg().Filepath, in.GetImg().Filter)
+	fmt.Printf(msg)
 
 	//DownloadFile(in.GetImg().Filepath, in.Img.Index, in.Img.Workload, filter)
+	
+	
 
+	if in.GetImg().Filter == "grayscale" {
+
+		newFilename := fmt.Sprintf("%v", in.Img.Index) + ".png"
+		resultsFolder := "./public/results/" + in.Img.Name + "/"
+		newResultsPath := path.Join(resultsFolder, newFilename)
+
+		img, err := imgio.Open(in.GetImg().Filepath)
+
+		if err != nil {
+			return &pb.ImgReply{Message: "Bild lib could not open image " + workerName}, nil 
+		}
+
+		filtered := effect.Grayscale(img)
+		fmt.Println(newResultsPath)
+		if err := imgio.Save(newResultsPath, filtered, imgio.PNGEncoder()); err != nil {
+			fmt.Println(err)
+			return &pb.ImgReply{Message: "Grayscale error " + workerName}, nil
+		}
+
+	} else if in.GetImg().Filter == "blur" {
+		newFilename := fmt.Sprintf("%v", in.Img.Index) + ".png"
+		resultsFolder := "./public/results/" + in.Img.Name + "/"
+		newResultsPath := path.Join(resultsFolder, newFilename)
+
+		img, err := imgio.Open(in.GetImg().Filepath)
+
+		if err != nil {
+			return &pb.ImgReply{Message: "Bild lib could not open image " + workerName}, nil 
+		}
+
+		filtered := blur.Gaussian(img, 3.0)
+
+		if err := imgio.Save(newResultsPath, filtered, imgio.PNGEncoder()); err != nil {
+			fmt.Println(err)
+			return &pb.ImgReply{Message: "Blur error " + workerName}, nil
+		}
+
+	} else {
+        return &pb.ImgReply{Message: "Required filter not supported by " + workerName}, nil
+	}
+	
 	return &pb.ImgReply{Message: "The image was proccesed by " + workerName}, nil
 
 }

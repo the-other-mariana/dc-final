@@ -128,6 +128,10 @@ func GetWorkerInfo(resp string) (Worker) {
 	return worker
 }
 
+func GetWorkloadName(key string) (string) {
+	return Workloads[key].Name
+}
+
 func Register(name string, num int) {
 	actions[strconv.Itoa(num)] = Action{id: num, worker: name}
 }

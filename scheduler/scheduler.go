@@ -36,7 +36,7 @@ func schedule(job Job, name string) {
 	c := pb.NewTaskClient(conn)
 	controller.UpdateStatus(name)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 5)
 	defer cancel()
 	if job.RPCName == "image" {
 		wl := job.Info[2]
@@ -44,6 +44,7 @@ func schedule(job Job, name string) {
 		id_int, _ := strconv.Atoi(id[0])
 		img := pb.Image{
 			Workload: wl, 
+			Name: controller.Workloads[wl].Name,
 			Index: int64(id_int), 
 			Filepath: job.Info[0],
 			Filter: job.Info[3],

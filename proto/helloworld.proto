@@ -24,9 +24,10 @@ package proto;
 
 message Image {
   string workload = 1;
-  int64 index = 2;
-  string filepath = 3;
-  string filter = 4;
+  string name = 2;
+  int64 index = 3;
+  string filepath = 4;
+  string filter = 5;
 }
 
 message ImgRequest {
