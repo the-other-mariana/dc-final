@@ -208,6 +208,13 @@ func CreateWorkload(c *gin.Context){
 		workloadName := c.PostForm("workload_name")
 		filter := c.PostForm("filter")
 
+		if strings.Contains(workloadName, "_"){
+			c.JSON(http.StatusConflict, ErrorResponse("Workload Names cannot include _ character"))
+		}
+		if strings.Contains(workloadName, "="){
+			c.JSON(http.StatusConflict, ErrorResponse("Workload Names cannot include = character"))
+		}
+
 		taken := false
 		for _, v := range controller.Workloads {
 			if v.Name == workloadName {
@@ -217,6 +224,10 @@ func CreateWorkload(c *gin.Context){
 		}
 		
 		if (!taken){
+			workloadStatus := "scheduling"
+			if len(controller.Workers) > 0 {
+				workloadStatus = "running"
+			}
 			// making directory for processed images
 			uploadsFolder := "public/results/" + workloadName + "/"
 			_ = os.MkdirAll(uploadsFolder, 0755)
@@ -229,9 +240,10 @@ func CreateWorkload(c *gin.Context){
 				Id: fmt.Sprintf("%v", len(controller.Workloads)),
 				Filter: filter,
 				Name: workloadName,
-				Status: "scheduling",
+				Status: workloadStatus,
 				Jobs: 0,
 				Imgs: []string{},
+				Filtered: []string{},
 			}
 
 			controller.Workloads[fmt.Sprintf("%v", newWL.Id)] = newWL
@@ -242,7 +254,7 @@ func CreateWorkload(c *gin.Context){
 				"workload_name": workloadName,
 				"status": newWL.Status,
 				"running_jobs": newWL.Jobs,
-				"filtered_images": newWL.Imgs,
+				"filtered_images": newWL.Filtered,
 			})
 		} else {
 			c.JSON(http.StatusOK, ErrorResponse("This workload already exists"))
@@ -337,6 +349,44 @@ func WorkerStatus(c *gin.Context) {
 	}
 }
 
+func WorkloadDetails(c *gin.Context) {
+	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
+	token := params[1]
+
+	workloadId := c.Param("workload_id")
+	if _, ok := Users[token]; ok {
+		reqWorkload := controller.Workloads[workloadId]
+		// status and jobs running calculation
+		reqStatus := "running"
+		reqJobs := len(reqWorkload.Imgs) - len(controller.Workloads[workloadId].Filtered)
+		if len(reqWorkload.Imgs) == len(reqWorkload.Filtered){
+			reqStatus = "completed"
+		}
+
+		updatedWL := controller.Workload{
+			Id: reqWorkload.Id,
+			Filter: reqWorkload.Filter,
+			Name: reqWorkload.Name,
+			Status: reqStatus, 
+			Jobs: reqWorkload.Jobs,
+			Imgs: reqWorkload.Imgs,
+			Filtered: reqWorkload.Filtered,
+		}
+		controller.Workloads[workloadId] = updatedWL
+
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"workload_id": updatedWL.Id,
+			"filter":   updatedWL.Filter,
+			"workload_name": updatedWL.Name,
+			"status": updatedWL.Status,
+			"running_jobs": reqJobs,
+			"filtered_images": controller.Workloads[workloadId].Filtered,
+		})
+	} else {
+		c.JSON(http.StatusConflict, ErrorResponse("Your token does not exist yet"))
+	}
+}
+
 func DownloadImage(c *gin.Context) {
 	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
 	token := params[1]
@@ -375,6 +425,7 @@ func Start(){
 	router.GET("/workloads/test", Workloads)
 	router.POST("/workloads", CreateWorkload)
 	router.GET("/status/:worker", WorkerStatus)
+	router.GET("/workloads/:workload_id", WorkloadDetails)
 	router.GET("/images/:image_id", DownloadImage)
 
 	router.Run(":8080")

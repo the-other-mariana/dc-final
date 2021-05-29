@@ -8,7 +8,7 @@ import (
 	"path"
 	"strings"
 	"path/filepath"
-	"fmt"
+	//"fmt"
 
 	"github.com/the-other-mariana/dc-final/controller"
 
@@ -43,9 +43,7 @@ func schedule(job Job, name string) {
 	if job.RPCName == "image" {
 		wl := job.Info[2]
 		pureName := filepath.Base(job.Info[0])[1:]
-		fmt.Println(pureName)
 		id := strings.Split(path.Base(pureName), "_")
-		fmt.Println(id)
 		id_int, _ := strconv.Atoi(id[0])
 		img := pb.Image{
 			Workload: wl, 
@@ -58,7 +56,24 @@ func schedule(job Job, name string) {
 		if err != nil {
 			log.Fatalf("could not proccess image: %v", err)
 		}
-		log.Printf("Scheduler: RPC respose from %s : %s was filtered", job.Address, r.GetMessage())
+		log.Printf("Scheduler: RPC respose from %s : %s", job.Address, r.GetMessage())
+		reply := strings.Split(r.GetMessage(), "=")
+
+		updatedWL := controller.Workload{}
+		prev := controller.Workloads[reply[1]]
+		updatedWL = controller.Workload{
+			Id: prev.Id,
+			Filter: prev.Filter,
+			Name: prev.Name,
+			Status: "completed",
+			Jobs: prev.Jobs + 1,
+			Imgs: prev.Imgs,
+			Filtered: prev.Filtered,
+		}
+
+		updatedWL.Filtered = append(updatedWL.Filtered, reply[0])
+		
+		controller.Workloads[reply[1]] = updatedWL
 	}
 	controller.UpdateStatus(name)
 	jobsCount++

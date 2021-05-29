@@ -76,10 +76,11 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 	msg := fmt.Sprintf("I will filter the following image: %v with filter: %v \n", in.GetImg().Filepath, in.GetImg().Filter)
 	fmt.Printf(msg)
 	controller.UpdateWorkerStatus(WorkerName, "busy")
+	newFilename := "new file"
 
 	if in.GetImg().Filter == "grayscale" {
 
-		newFilename := fmt.Sprintf("f%v_%v", in.Img.Index, in.Img.Name) + ".png"
+		newFilename = fmt.Sprintf("f%v_%v", in.Img.Index, in.Img.Name) + ".png"
 		resultsFolder := "./public/results/" + in.Img.Name + "/"
 		newResultsPath := path.Join(resultsFolder, newFilename)
 
@@ -96,7 +97,7 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 		}
 
 	} else if in.GetImg().Filter == "blur" {
-		newFilename := fmt.Sprintf("f%v_%v", in.Img.Index, in.Img.Name) + ".png"
+		newFilename = fmt.Sprintf("f%v_%v", in.Img.Index, in.Img.Name) + ".png"
 		resultsFolder := "./public/results/" + in.Img.Name + "/"
 		newResultsPath := path.Join(resultsFolder, newFilename)
 
@@ -113,27 +114,13 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 			return &pb.ImgReply{Message: "Blur error " + WorkerName}, nil
 		}
 
-		updatedWL := controller.Workload{}
-		prev := controller.Workloads[in.Img.Workload]
-		updatedWL = controller.Workload{
-			Id: prev.Id,
-			Filter: prev.Filter,
-			Name: prev.Name,
-			Status: "completed",
-			Jobs: prev.Jobs + 1,
-			Imgs: prev.Imgs,
-		}
-
-		updatedWL.Imgs = append(prev.Imgs, newFilename)
-		controller.Workloads[in.Img.Workload] = updatedWL
-
 	} else {
         return &pb.ImgReply{Message: "Required filter not supported by " + WorkerName}, nil
 	}
 	
 	controller.UpdateUsage(WorkerName)
 	controller.UpdateWorkerStatus(WorkerName, "free")
-	return &pb.ImgReply{Message: "The image was proccesed by " + WorkerName}, nil
+	return &pb.ImgReply{Message: fmt.Sprintf("%v=%v", newFilename, in.Img.Workload)}, nil
 
 }
 

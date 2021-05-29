@@ -59,6 +59,7 @@ type Workload struct{
 	Status string
 	Jobs int
 	Imgs []string
+	Filtered []string
 }
 
 func die(format string, v ...interface{}) {
