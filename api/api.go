@@ -167,10 +167,10 @@ func Status(c *gin.Context) {
 }
 
 // upload json response
-func UploadResponse(workloadId string, id int, imgType string) (gin.H) {
+func UploadResponse(workloadId string, id string, imgType string) (gin.H) {
 	resp := gin.H{
 		"workload_id": workloadId,
-		"image_id": fmt.Sprintf("%v", id),
+		"image_id": id,
 		"type": imgType,
 	}
 	return resp
@@ -293,7 +293,8 @@ func Upload(c *gin.Context) {
 			c.JSON(http.StatusConflict, ErrorResponse("Given workload does not exist"))
 		}
 
-		newFilename := fmt.Sprintf("%v", id) + filepath.Ext(file.Filename)
+		fileId := fmt.Sprintf("o%v_%v", id, updatedWL.Name) 
+		newFilename := fileId + filepath.Ext(file.Filename)
 		downloadFolder := "public/download/" + myWorkload.Name + "/"
 		newPath := path.Join(downloadFolder, newFilename)
 
@@ -311,7 +312,7 @@ func Upload(c *gin.Context) {
 		Jobs <- sampleJob
 		time.Sleep(time.Second * 5)
 
-		c.JSON(http.StatusOK, UploadResponse(workloadId, id, "original"))
+		c.JSON(http.StatusOK, UploadResponse(workloadId, fileId, "original"))
 	} else {
 		c.JSON(http.StatusConflict, ErrorResponse("Your token does not exist yet"))
 	}
@@ -341,29 +342,23 @@ func DownloadImage(c *gin.Context) {
 	image_id := c.Param("image_id")
 	if _, ok := Users[token]; ok {
 		
-		
-	} else {
-		//c.JSON(http.StatusConflict, ErrorResponse("Your token does not exist yet"))
-	}
-
-	if strings.Contains(image_id, "_") {
-		imgInfo := strings.Split(image_id, "_")
-		downloadPath := "./public/results/" + imgInfo[1] + "/" + image_id + ".png"
-		/*
-		f, err := os.Open(downloadPath)
-		if err != nil {
-			c.JSON(http.StatusConflict, ErrorResponse("Could not open required file"))
+		// filtered files
+		if string(image_id[0]) == "f" {
+			imgInfo := strings.Split(image_id, "_")
+			downloadPath := "./public/results/" + imgInfo[1] + "/" + image_id + ".png"
+			c.File(downloadPath)
+		} else {
+			// original files
+			imgInfo := strings.Split(image_id, "_")
+			downloadPath := "./public/download/" + imgInfo[1] + "/" + image_id + ".png"
+			c.File(downloadPath)
 		}
-		defer f.Close()
 
-		c.Writer.Header().Set("Content-Description", "File Transfer")
-		c.Writer.Header().Set("Content-Disposition", "attachment; filename=img.png")
-		c.Writer.Header().Set("Content-Type", "image/png")
-
-		//http.ServeFile(c.Writer, c.Request, downloadPath)
-		io.Copy(c.Writer, f)*/
-		c.File(downloadPath)
+	} else {
+		c.JSON(http.StatusConflict, ErrorResponse("Your token does not exist yet"))
 	}
+
+	
 }
 
 func Start(){

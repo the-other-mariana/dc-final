@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"path"
 	"strings"
+	"path/filepath"
+	"fmt"
 
 	"github.com/the-other-mariana/dc-final/controller"
 
@@ -40,7 +42,10 @@ func schedule(job Job, name string) {
 	defer cancel()
 	if job.RPCName == "image" {
 		wl := job.Info[2]
-		id := strings.Split(path.Base(job.Info[0]), ".")
+		pureName := filepath.Base(job.Info[0])[1:]
+		fmt.Println(pureName)
+		id := strings.Split(path.Base(pureName), "_")
+		fmt.Println(id)
 		id_int, _ := strconv.Atoi(id[0])
 		img := pb.Image{
 			Workload: wl, 

@@ -82,7 +82,7 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 
 	if in.GetImg().Filter == "grayscale" {
 
-		newFilename := fmt.Sprintf("%v_%v", in.Img.Index, in.Img.Name) + ".png"
+		newFilename := fmt.Sprintf("f%v_%v", in.Img.Index, in.Img.Name) + ".png"
 		resultsFolder := "./public/results/" + in.Img.Name + "/"
 		newResultsPath := path.Join(resultsFolder, newFilename)
 
@@ -99,7 +99,7 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 		}
 
 	} else if in.GetImg().Filter == "blur" {
-		newFilename := fmt.Sprintf("%v_%v", in.Img.Index, in.Img.Name) + ".png"
+		newFilename := fmt.Sprintf("f%v_%v", in.Img.Index, in.Img.Name) + ".png"
 		resultsFolder := "./public/results/" + in.Img.Name + "/"
 		newResultsPath := path.Join(resultsFolder, newFilename)
 
