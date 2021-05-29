@@ -66,7 +66,8 @@ func schedule(job Job, name string) {
 			Filtered: prev.Filtered,
 		}
 
-		updatedWL.Filtered = append(updatedWL.Filtered, reply[0])
+		filtered_id := strings.Split(reply[0], ".")
+		updatedWL.Filtered = append(updatedWL.Filtered, filtered_id[0])
 		
 		controller.Workloads[reply[1]] = updatedWL
 	}
