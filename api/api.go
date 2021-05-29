@@ -14,6 +14,7 @@ import (
 	"path"
 	"strconv"
 	"os"
+	//"io"
 
 	"github.com/the-other-mariana/dc-final/controller"
 	"github.com/the-other-mariana/dc-final/scheduler"
@@ -333,6 +334,38 @@ func WorkerStatus(c *gin.Context) {
 	}
 }
 
+func DownloadImage(c *gin.Context) {
+	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
+	token := params[1]
+
+	image_id := c.Param("image_id")
+	if _, ok := Users[token]; ok {
+		
+		
+	} else {
+		c.JSON(http.StatusConflict, ErrorResponse("Your token does not exist yet"))
+	}
+
+	if strings.Contains(image_id, "_") {
+		imgInfo := strings.Split(image_id, "_")
+		downloadPath := "./public/results/" + imgInfo[1] + "/" + image_id + ".png"
+		/*
+		f, err := os.Open(downloadPath)
+		if err != nil {
+			c.JSON(http.StatusConflict, ErrorResponse("Could not open required file"))
+		}
+		defer f.Close()
+
+		c.Writer.Header().Set("Content-Description", "File Transfer")
+		c.Writer.Header().Set("Content-Disposition", "attachment; filename=img.png")
+		c.Writer.Header().Set("Content-Type", "image/png")
+
+		//http.ServeFile(c.Writer, c.Request, downloadPath)
+		io.Copy(c.Writer, f)*/
+		c.File(downloadPath)
+	}
+}
+
 func Start(){
 	router := gin.Default()
 	router.Use(static.Serve("/", static.LocalFile("./public", true)))
@@ -344,6 +377,7 @@ func Start(){
 	router.GET("/workloads/test", Workloads)
 	router.POST("/workloads", CreateWorkload)
 	router.GET("/status/:worker", WorkerStatus)
+	router.GET("/images/:image_id", DownloadImage)
 
 	router.Run(":8080")
 }

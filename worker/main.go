@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 	//"dc-labs/mangos/protocol/respondent"
 	"go.nanomsg.org/mangos/protocol/respondent"
+	"github.com/the-other-mariana/dc-final/controller"
 
 	// register transports
 	_ "go.nanomsg.org/mangos/transport/all"
@@ -81,7 +82,7 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 
 	if in.GetImg().Filter == "grayscale" {
 
-		newFilename := fmt.Sprintf("%v", in.Img.Index) + ".png"
+		newFilename := fmt.Sprintf("%v_%v", in.Img.Index, in.Img.Name) + ".png"
 		resultsFolder := "./public/results/" + in.Img.Name + "/"
 		newResultsPath := path.Join(resultsFolder, newFilename)
 
@@ -92,14 +93,13 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 		}
 
 		filtered := effect.Grayscale(img)
-		fmt.Println(newResultsPath)
 		if err := imgio.Save(newResultsPath, filtered, imgio.PNGEncoder()); err != nil {
 			fmt.Println(err)
 			return &pb.ImgReply{Message: "Grayscale error " + workerName}, nil
 		}
 
 	} else if in.GetImg().Filter == "blur" {
-		newFilename := fmt.Sprintf("%v", in.Img.Index) + ".png"
+		newFilename := fmt.Sprintf("%v_%v", in.Img.Index, in.Img.Name) + ".png"
 		resultsFolder := "./public/results/" + in.Img.Name + "/"
 		newResultsPath := path.Join(resultsFolder, newFilename)
 
@@ -115,6 +115,20 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 			fmt.Println(err)
 			return &pb.ImgReply{Message: "Blur error " + workerName}, nil
 		}
+
+		updatedWL := controller.Workload{}
+		prev := controller.Workloads[in.Img.Workload]
+		updatedWL = controller.Workload{
+			Id: prev.Id,
+			Filter: prev.Filter,
+			Name: prev.Name,
+			Status: "completed",
+			Jobs: prev.Jobs + 1,
+			Imgs: prev.Imgs,
+		}
+
+		updatedWL.Imgs = append(prev.Imgs, newFilename)
+		controller.Workloads[in.Img.Workload] = updatedWL
 
 	} else {
         return &pb.ImgReply{Message: "Required filter not supported by " + workerName}, nil

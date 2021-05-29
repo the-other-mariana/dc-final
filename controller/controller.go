@@ -24,7 +24,7 @@ var done = make(chan string)
 var actions = make(map[string]Action)
 var Workers = make(map[string]Worker)
 var Workloads = make(map[string]Workload)
-//var filters = make(map[string]ImageService)
+var filters = make(map[string]ImageService)
 
 type Worker struct {
 	Name     string `json:"name"`
@@ -42,9 +42,9 @@ type Action struct {
 	worker 	string
 }
 type ImageService struct{
-	id int
-	image string
-	worker string
+	Id int
+	Image string
+	Workload string
 }
 type Workload struct{
 	Id string
