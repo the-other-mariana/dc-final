@@ -343,7 +343,7 @@ func DownloadImage(c *gin.Context) {
 		
 		
 	} else {
-		c.JSON(http.StatusConflict, ErrorResponse("Your token does not exist yet"))
+		//c.JSON(http.StatusConflict, ErrorResponse("Your token does not exist yet"))
 	}
 
 	if strings.Contains(image_id, "_") {
