@@ -71,12 +71,12 @@ func Start(jobs chan Job) error {
 	for {
 		job := <-jobs
 		time.Sleep(time.Second * 5)
-		minUsage := 99999
+		minUsage := 999999
 		minPort := 0
 		worker := controller.Worker{}
 
 		for _, w := range controller.Workers {
-			if w.Usage < minUsage {
+			if w.Usage < minUsage && w.Status == "free" {
 				minPort = w.Port
 				minUsage = w.Usage
 				worker = w

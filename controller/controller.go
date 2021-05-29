@@ -21,6 +21,7 @@ var controllerAddress = "tcp://localhost:40899"
 var sock mangos.Socket
 var done = make(chan string)
 
+var Uploads = make(map[string]Image)
 var actions = make(map[string]Action)
 var Workers = make(map[string]Worker)
 var Workloads = make(map[string]Workload)
@@ -37,6 +38,11 @@ type Worker struct {
 	JobsDone int    `json:"jobsDone"` 
 }
 
+type Image struct {
+	Id int
+	Name string
+	Ext string
+}
 type Action struct {
 	id		int
 	worker 	string
@@ -130,6 +136,21 @@ func GetWorkerInfo(resp string) (Worker) {
 
 func GetWorkloadName(key string) (string) {
 	return Workloads[key].Name
+}
+
+func UpdateWorkerStatus(worker string, currStatus string){
+	prevWorker := Workers[worker]
+	newWorker := Worker{
+		Name: prevWorker.Name,
+		Tags: prevWorker.Tags,
+		Status: currStatus,
+		Usage: prevWorker.Usage,
+		URL: prevWorker.URL,
+		Active: prevWorker.Active,
+		Port: prevWorker.Port,
+		JobsDone: prevWorker.JobsDone,
+	}
+	Workers[worker] = newWorker
 }
 
 func Register(name string, num int) {

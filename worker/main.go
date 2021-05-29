@@ -30,14 +30,14 @@ var (
 	defaultRPCPort = 50051
 )
 
-// server is used to implement helloworld.GreeterServer.
+// server is used to implement helloworld.TaskServer.
 type server struct {
 	pb.UnimplementedTaskServer
 }
 
 var (
 	controllerAddress = ""
-	workerName        = ""
+	WorkerName        = ""
 	tags              = ""
 	status            = ""
 	workDone          = 0
@@ -56,17 +56,17 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 	log.Printf("RPC: Received: %v", in.GetName())
 	if in.GetName() == "test" {
 		workDone += 1
-		log.Printf("RPC [Worker] %+v: testing...", workerName)
+		log.Printf("RPC [Worker] %+v: testing...", WorkerName)
 		usage += 1
 		status = "Running"
 		usage -= 1
-		return &pb.HelloReply{Message: "Hello, " + workerName + " in test"}, nil
+		return &pb.HelloReply{Message: "Hello, " + WorkerName + " in test"}, nil
 	} else {
 		workDone += 1
-		log.Printf("[Worker] %+v: calling", workerName)
+		log.Printf("[Worker] %+v: calling", WorkerName)
 		usage += 1
 		status = "Running"
-		return &pb.HelloReply{Message: "Hello " + workerName}, nil
+		return &pb.HelloReply{Message: "Hello " + WorkerName}, nil
 	}	
 }
 
@@ -75,10 +75,7 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 
 	msg := fmt.Sprintf("I will filter the following image: %v with filter: %v \n", in.GetImg().Filepath, in.GetImg().Filter)
 	fmt.Printf(msg)
-
-	//DownloadFile(in.GetImg().Filepath, in.Img.Index, in.Img.Workload, filter)
-	
-	
+	controller.UpdateWorkerStatus(WorkerName, "busy")
 
 	if in.GetImg().Filter == "grayscale" {
 
@@ -89,13 +86,13 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 		img, err := imgio.Open(in.GetImg().Filepath)
 
 		if err != nil {
-			return &pb.ImgReply{Message: "Bild lib could not open image " + workerName}, nil 
+			return &pb.ImgReply{Message: "Bild lib could not open image " + WorkerName}, nil 
 		}
 
 		filtered := effect.Grayscale(img)
 		if err := imgio.Save(newResultsPath, filtered, imgio.PNGEncoder()); err != nil {
 			fmt.Println(err)
-			return &pb.ImgReply{Message: "Grayscale error " + workerName}, nil
+			return &pb.ImgReply{Message: "Grayscale error " + WorkerName}, nil
 		}
 
 	} else if in.GetImg().Filter == "blur" {
@@ -106,14 +103,14 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 		img, err := imgio.Open(in.GetImg().Filepath)
 
 		if err != nil {
-			return &pb.ImgReply{Message: "Bild lib could not open image " + workerName}, nil 
+			return &pb.ImgReply{Message: "Bild lib could not open image " + WorkerName}, nil 
 		}
 
 		filtered := blur.Gaussian(img, 3.0)
 
 		if err := imgio.Save(newResultsPath, filtered, imgio.PNGEncoder()); err != nil {
 			fmt.Println(err)
-			return &pb.ImgReply{Message: "Blur error " + workerName}, nil
+			return &pb.ImgReply{Message: "Blur error " + WorkerName}, nil
 		}
 
 		updatedWL := controller.Workload{}
@@ -131,17 +128,19 @@ func (s *server) FilterImage(ctx context.Context, in *pb.ImgRequest) (*pb.ImgRep
 		controller.Workloads[in.Img.Workload] = updatedWL
 
 	} else {
-        return &pb.ImgReply{Message: "Required filter not supported by " + workerName}, nil
+        return &pb.ImgReply{Message: "Required filter not supported by " + WorkerName}, nil
 	}
 	
-	return &pb.ImgReply{Message: "The image was proccesed by " + workerName}, nil
+	controller.UpdateUsage(WorkerName)
+	controller.UpdateWorkerStatus(WorkerName, "free")
+	return &pb.ImgReply{Message: "The image was proccesed by " + WorkerName}, nil
 
 }
 
 // ./worker --controller <host>:<port> --worker-name <node_name> --tags <tag1>,<tag2>...
 func init() {
 	flag.StringVar(&controllerAddress, "controller", "tcp://localhost:40899", "Controller address")
-	flag.StringVar(&workerName, "worker-name", "hard-worker", "Worker Name")
+	flag.StringVar(&WorkerName, "worker-name", "hard-worker", "Worker Name")
 	flag.StringVar(&tags, "tags", "gpu,superCPU,largeMemory", "Comma-separated worker tags")
 }
 
@@ -163,11 +162,11 @@ func joinCluster() {
 		if msg, err = sock.Recv(); err != nil {
 			die("Cannot recv: %s", err.Error())
 		}
-		info := fmt.Sprintf("%v %v %v %v %v %v", workerName, status, usage, tags, defaultRPCPort, jobsDone)
+		info := fmt.Sprintf("%v %v %v %v %v %v", WorkerName, status, usage, tags, defaultRPCPort, jobsDone)
 		if err = sock.Send([]byte(info)); err != nil {
 			die("Cannot send: %s", err.Error())
 		}
-		log.Printf("Message-Passing: Worker(%s): Received %s\n", workerName, string(msg))
+		log.Printf("Message-Passing: Worker(%s): Received %s\n", WorkerName, string(msg))
 	}
 }
 

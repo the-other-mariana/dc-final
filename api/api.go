@@ -305,11 +305,13 @@ func Upload(c *gin.Context) {
 			c.JSON(http.StatusConflict, ErrorResponse("Could not save the file"))
 			return
 		}
+		registeredImage := controller.Image{Id:id, Name: fileId, Ext: filepath.Ext(file.Filename)}
+		controller.Uploads[fileId] = registeredImage
 
-		information := [4]string{newPath, filepath.Ext(file.Filename), workloadId, controller.Workloads[workloadId].Filter}
-
-		sampleJob := scheduler.Job{Address: "localhost:50051", RPCName: "image", Info: information}
+		details := [4]string{newPath, filepath.Ext(file.Filename), workloadId, controller.Workloads[workloadId].Filter}
+		sampleJob := scheduler.Job{Address: "localhost:50051", RPCName: "image", Info: details}
 		Jobs <- sampleJob
+		NumTests += 1
 		time.Sleep(time.Second * 5)
 
 		c.JSON(http.StatusOK, UploadResponse(workloadId, fileId, "original"))
@@ -349,8 +351,9 @@ func DownloadImage(c *gin.Context) {
 			c.File(downloadPath)
 		} else {
 			// original files
+			ext := controller.Uploads[image_id].Ext
 			imgInfo := strings.Split(image_id, "_")
-			downloadPath := "./public/download/" + imgInfo[1] + "/" + image_id + ".png"
+			downloadPath := "./public/download/" + imgInfo[1] + "/" + image_id + ext
 			c.File(downloadPath)
 		}
 
