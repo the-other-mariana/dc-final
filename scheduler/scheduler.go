@@ -16,11 +16,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-//const (
-//	address     = "localhost:50051"
-//	defaultName = "world"
-//)
-
 var jobsCount int
 
 type Job struct {
@@ -54,7 +49,7 @@ func schedule(job Job, name string) {
 		}
 		r, err := c.FilterImage(ctx, &pb.ImgRequest{Name: "Image Filter", Img: &img })
 		if err != nil {
-			log.Fatalf("could not proccess image: %v", err)
+			log.Fatalf("Could not proccess image: %v", err)
 		}
 		log.Printf("Scheduler: RPC respose from %s : %s", job.Address, r.GetMessage())
 		reply := strings.Split(r.GetMessage(), "=")

@@ -12,7 +12,6 @@ import (
 	"time"
 	"path/filepath"
 	"path"
-	"strconv"
 	"os"
 	//"io"
 
@@ -68,9 +67,8 @@ func ErrorResponse(msg string) (gin.H) {
 
 // login json response
 func LoginResponse(username string, token string) (gin.H) {
-	msg := fmt.Sprintf("Hi %v, welcome to the DPIP system", username)
 	resp := gin.H{
-		"message": msg,
+		"user": username,
 		"token": token,
 	}
 	return resp
@@ -119,7 +117,7 @@ func Login(c *gin.Context) {
 func LogoutResponse(username string) (gin.H) {
 	msg := fmt.Sprintf("Bye %v, your token has been revoked", username)
 	resp := gin.H{
-		"message": msg,
+		"logout_message": msg,
 	}
 	return resp
 }
@@ -141,12 +139,13 @@ func Logout(c *gin.Context) {
 }
 
 // status json response
-func StatusResponse(username string) (gin.H) {
-	msg := fmt.Sprintf("Hi %v, the DPIP System is Up and Running", username)
+func StatusResponse() (gin.H) {
 	t := time.Now() // in format 2021-04-14T23:20:47.361719701Z
+
 	resp := gin.H{
-		"message": msg,
-		"time": t.Format("2006-01-02 15:04:05"),
+		"system_name": "Distributed Parallel Image Processing (DPIP) System",
+		"server_time": t.Format("2006-01-02 15:04:05"),
+		"active_workloads": len(controller.Workloads),
 	}
 	return resp
 }
@@ -160,7 +159,7 @@ func Status(c *gin.Context) {
 	token := params[1]
 
 	if _, ok := Users[token]; ok {
-		c.JSON(http.StatusOK, StatusResponse(Users[token].username))
+		c.JSON(http.StatusOK, StatusResponse())
 	} else {
 		c.JSON(http.StatusConflict, ErrorResponse("Your token does not exist yet"))
 	}
@@ -178,27 +177,6 @@ func UploadResponse(workloadId string, id string, imgType string) (gin.H) {
 
 var Jobs = make(chan scheduler.Job)
 var NumTests int
-
-func Workloads(c *gin.Context) {
-	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
-	token := params[1]
-
-	if _, ok := Users[token]; ok {
-		sampleJob := scheduler.Job{Address: "localhost:50051", RPCName: "test"}
-		Jobs <- sampleJob
-		time.Sleep(time.Second * 5)
-		name := controller.GetWorker(NumTests)
-		c.JSON(http.StatusOK, map[string]interface{}{
-			"Workload": "test",
-			"Job ID":   NumTests,
-			"Status":   "Scheduling",
-			"Result":   "Done by " + name,
-		})
-		NumTests += 1
-	} else {
-		c.JSON(http.StatusOK, ErrorResponse("Your token does not exist yet"))
-	}
-}
 
 func CreateWorkload(c *gin.Context){
 	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
@@ -332,23 +310,6 @@ func Upload(c *gin.Context) {
 	}
 }
 
-func WorkerStatus(c *gin.Context) {
-	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
-	token := params[1]
-
-	workerName := c.Param("worker")
-	if _, ok := Users[token]; ok {
-		c.JSON(http.StatusOK, map[string]interface{}{
-			"Worker": controller.Workers[workerName].Name,
-			"Tags":   controller.Workers[workerName].Tags,
-			"Status": controller.Workers[workerName].Status,
-			"Usage":  strconv.Itoa(controller.Workers[workerName].Usage) + "%",
-		})
-	} else {
-		c.JSON(http.StatusOK, ErrorResponse("Your token does not exist yet"))
-	}
-}
-
 func WorkloadDetails(c *gin.Context) {
 	params := strings.Split(c.Request.Header.Get("Authorization"), " ")
 	token := params[1]
@@ -422,9 +383,7 @@ func Start(){
 	router.GET("/status", Status)
 	router.POST("/images", Upload)
 
-	router.GET("/workloads/test", Workloads)
 	router.POST("/workloads", CreateWorkload)
-	router.GET("/status/:worker", WorkerStatus)
 	router.GET("/workloads/:workload_id", WorkloadDetails)
 	router.GET("/images/:image_id", DownloadImage)
 
