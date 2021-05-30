@@ -302,7 +302,7 @@ func Upload(c *gin.Context) {
 		sampleJob := scheduler.Job{Address: "localhost:50051", RPCName: "image", Info: details}
 		Jobs <- sampleJob
 		NumTests += 1
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 1)
 
 		c.JSON(http.StatusOK, UploadResponse(workloadId, fileId, "original"))
 	} else {
