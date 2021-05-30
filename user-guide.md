@@ -100,7 +100,7 @@ $ curl --location --request POST 'http://localhost:8080/images' --header 'Author
 }
 ```
 
-*Note:* You can use our [test script stress_test.py]() to do this for the frames folder images by typing:
+*Note:* You can use our [test script stress_test.py](https://github.com/the-other-mariana/dc-final/blob/main/stress_test.py) to do this for the frames folder images by typing:
 
 ```
 $ python3 stress_test.py -action push -workload-id 0 -token <ACCESS_TOKEN> -frames-path frames
@@ -128,7 +128,7 @@ $ curl --location --request GET 'http://localhost:8080/workloads/{workload_id}' 
 $ curl --location --request GET 'http://localhost:8080/images/{image_id}' --header 'Authorization: Bearer <ACCESS_TOKEN>'
 ```
 
-*Note:* the resulting filtered images of `myworkload` (or any workload name) are in ./public/results/workload_name/ and you can join the results in a video using another [script video_utils.py]() by typing:
+*Note:* the resulting filtered images of `myworkload` (or any workload name) are in ./public/results/workload_name/ and you can join the results in a video using another [script video_utils.py](https://github.com/the-other-mariana/dc-final/blob/main/video_utils.py) by typing:
 
 ```
 python3 video_utils.py -action join -workload_name myworkload filtered.mp4 public/results/myworkload
@@ -139,6 +139,6 @@ python3 video_utils.py -action join -workload_name myworkload filtered.mp4 publi
 ```
 $ curl --location --request DELETE 'http://localhost:8080/logout' --header 'Authorization: Bearer <ACCESS_TOKEN>'
 {
-    "logout_message": "Bye username, your token will be revoked"
+    "logout_message": "Bye username, your token has been revoked"
 }
 ```
